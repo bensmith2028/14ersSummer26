@@ -1,0 +1,63 @@
+# Publishes the site to GitHub Pages as plain static files.
+#
+# This deliberately replaces the default branch-based Pages build, which runs
+# the site through Jekyll. Nothing here needs Jekyll -- it's hand-written HTML,
+# CSS and JS -- and that step was failing, taking the whole deploy with it.
+#
+# Requires Settings -> Pages -> Source: "GitHub Actions".
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Lets you re-run a deploy from the Actions tab without making a commit.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than piling up queued builds.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      # Pages serves assets with `cache-control: max-age=600`, so after a deploy a
+      # normal reload keeps running the previous app.js/style.css for up to ten
+      # minutes -- which reads as "my change didn't deploy". Stamping the commit
+      # SHA onto the URLs makes every deploy a new URL, so browsers always fetch
+      # the new files and nobody has to hard-refresh. Applied to the checked-out
+      # copy only; the committed HTML keeps its clean relative paths.
+      - name: Cache-bust asset URLs
+        run: |
+          V="${GITHUB_SHA::8}"
+          sed -i -E "s/(href|src)=\"(style\.css|app\.js|data\.js)\"/\1=\"\2?v=$V\"/g" index.html
+          echo "Stamped asset URLs with v=$V:"
+          grep -oE '(href|src)="[^"]*\?v=[^"]*"' index.html
+          # Fail loudly rather than silently shipping unstamped assets if the
+          # markup changes shape (e.g. single quotes, or a renamed file).
+          test "$(grep -cE '\?v='"$V" index.html)" -eq 3
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # The site is served from the repo root.
+          path: .
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

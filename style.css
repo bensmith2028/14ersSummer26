@@ -1,0 +1,525 @@
+:root {
+  --bg: #0f1418;
+  --panel: #161d23;
+  --panel-2: #1d262e;
+  --line: #2a353f;
+  --ink: #e8eef3;
+  --ink-dim: #9bacba;
+  --accent: #f2a65a;
+  --hub: #5ab0f2;
+
+  --c1: #4bbf73;
+  --c2: #9ac93f;
+  --c2d: #e2c541;
+  --c3e: #f0932b;
+  --c3: #e8613c;
+  --c4: #d6344f;
+}
+
+* { box-sizing: border-box; }
+
+html { height: 100%; }
+body {
+  margin: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ---------- top bar ---------- */
+.topbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.brand h1 { margin: 0; font-size: 19px; letter-spacing: .2px; }
+.brand h1 span { color: var(--accent); font-weight: 500; }
+
+.panel-toggle {
+  display: none;
+  background: var(--panel-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* ---------- layout ---------- */
+.layout {
+  position: relative;
+  flex: 1;
+  min-height: 0; /* let the grid children scroll instead of stretching the page */
+  display: grid;
+  grid-template-columns: 380px 1fr;
+}
+/* Neutral light backdrop so tiles fade in rather than flashing dark on load. */
+.map { height: 100%; min-height: 0; background: #e9e6e0; }
+.map.map-dark { background: #0b0f12; }
+
+.sidebar {
+  overflow-y: auto;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  padding: 16px;
+}
+
+/* ---------- filters ---------- */
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: end;
+}
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-dim); min-width: 0; }
+.field select {
+  width: 100%;
+  background: var(--panel-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 7px 8px;
+  font-size: 13px;
+}
+.reset {
+  grid-column: 1 / -1;
+  background: none;
+  color: var(--ink-dim);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.reset:hover { color: var(--ink); border-color: var(--ink-dim); }
+
+.pick-open {
+  grid-column: 1 / -1;
+  background: var(--panel-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pick-open:hover { border-color: var(--accent); color: var(--accent); }
+.pick-open span { font-weight: 400; color: var(--ink-dim); }
+
+.count { margin: 14px 0 8px; font-size: 12px; color: var(--ink-dim); }
+
+/* ---------- peak picker dialog ---------- */
+.picker {
+  width: min(760px, 94vw);
+  max-height: 86vh;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--ink);
+  overflow: hidden;
+  flex-direction: column;
+}
+/* Only lay the dialog out when it's open — a bare `display: flex` would
+   override the browser's default `display: none` for a closed <dialog>. */
+.picker[open] { display: flex; }
+.picker::backdrop { background: rgba(4, 8, 11, .72); }
+
+.picker-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.picker-head h2 { margin: 0; font-size: 16px; }
+.picker-head p { margin: 5px 0 0; font-size: 12.5px; color: var(--ink-dim); max-width: 62ch; }
+.pick-close {
+  background: none; border: none; color: var(--ink-dim);
+  font-size: 26px; line-height: 1; cursor: pointer; padding: 0 4px;
+}
+.pick-close:hover { color: var(--ink); }
+
+.picker-tools {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.picker-tools input {
+  flex: 1 1 220px;
+  background: var(--panel-2); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 7px;
+  padding: 8px 10px; font-size: 13px;
+}
+.picker-bulk { display: flex; gap: 6px; }
+.picker-bulk button {
+  background: var(--panel-2); color: var(--ink-dim);
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 6px 12px; font-size: 12px; cursor: pointer; white-space: nowrap;
+}
+.picker-bulk button:hover { color: var(--accent); border-color: var(--accent); }
+
+.pick-share {
+  flex: 0 0 auto;
+  background: none;
+  color: var(--accent);
+  border: 1px dashed var(--line);
+  border-radius: 7px;
+  padding: 7px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pick-share:hover { border-color: var(--accent); border-style: solid; }
+
+.picker-status { margin: 0; padding: 10px 18px 0; font-size: 12px; color: var(--ink-dim); }
+.picker-empty { padding: 24px 18px; color: var(--ink-dim); font-size: 13px; }
+.picker-list { overflow-y: auto; padding: 8px 18px 18px; }
+
+.pick-group { margin-top: 14px; }
+.pick-group-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 10px; padding-bottom: 5px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+.pick-group-head span {
+  font-size: 11px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--hub); font-weight: 600;
+}
+.pick-group-head button {
+  background: none; border: none; color: var(--ink-dim);
+  font-size: 11.5px; cursor: pointer; padding: 2px 4px;
+}
+.pick-group-head button:hover { color: var(--accent); text-decoration: underline; }
+
+.pick-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13.5px;
+}
+.pick-row:hover { background: var(--panel-2); }
+.pick-row input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+.pick-name { display: flex; align-items: center; gap: 7px; }
+.pick-star { color: var(--accent); font-size: 11px; }
+.pick-unranked {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--ink-dim); border: 1px solid var(--line);
+  border-radius: 999px; padding: 1px 6px;
+}
+.pick-meta { font-size: 11.5px; color: var(--ink-dim); text-align: right; white-space: nowrap; }
+
+@media (max-width: 560px) {
+  .pick-row { grid-template-columns: auto 1fr; }
+  .pick-meta { grid-column: 2; text-align: left; }
+}
+
+/* ---------- peak list ---------- */
+.peak-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+
+.hub-heading {
+  margin: 14px 0 2px;
+  font-size: 11px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--hub);
+  font-weight: 600;
+}
+.hub-heading:first-child { margin-top: 0; }
+
+.peak {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--line);
+  border-radius: 9px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.peak:hover, .peak.active { border-color: var(--accent); background: #232e37; }
+.peak.active { outline: 1px solid var(--accent); }
+
+.peak-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.peak-name { font-weight: 600; font-size: 14.5px; }
+.peak-elev { font-size: 12px; color: var(--ink-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.tag {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #0f1519;
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+.tag.cls { color: #0f1418; font-weight: 700; border: none; }
+.tag.risk { display: inline-flex; align-items: center; gap: 5px; }
+.tags + .tags { margin-top: 5px; }
+
+.peak-note { margin: 8px 0 0; font-size: 12.5px; color: var(--ink-dim); }
+.peak-route { margin-top: 8px; font-size: 12.5px; color: var(--ink-dim); }
+
+/* ---------- dots ---------- */
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: none; }
+
+/* ---------- legend ---------- */
+.legend { margin-top: 26px; border-top: 1px solid var(--line); padding-top: 16px; }
+.legend h2 { font-size: 12px; margin: 14px 0 7px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink); }
+.legend h2:first-child { margin-top: 0; }
+.legend h2 small { text-transform: none; letter-spacing: 0; color: var(--ink-dim); font-weight: 400; }
+.legend-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; font-size: 12px; color: var(--ink-dim); }
+.legend-list li { display: flex; align-items: center; gap: 8px; }
+.legend-defs { margin-top: 8px; }
+.legend-defs li { display: list-item; margin-left: 14px; list-style: disc; line-height: 1.45; }
+.legend-defs strong { color: var(--ink); font-weight: 600; }
+a { color: var(--accent); }
+
+/* ---------- map markers ---------- */
+.pk-marker {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  /* Dark ring then a soft drop shadow: reads against both the muted and the
+     terrain basemap without a bright halo competing with the marker color. */
+  border: 2.5px solid #0d1216;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .65);
+  display: grid; place-items: center;
+}
+/* Inner dot carries the exposure rating; the ring carries the difficulty class. */
+.pk-marker i {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(15, 20, 24, .55);
+}
+
+/* On the dark basemap a near-black outline reads as a hole rather than an edge,
+   so flip the marker and hub outlines to a light one. */
+.map-dark .pk-marker {
+  border-color: rgba(232, 238, 243, .92);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, .8);
+}
+.map-dark .hub-marker { border-color: rgba(232, 238, 243, .92); }
+.pk-marker.sel { box-shadow: 0 0 0 4px var(--accent); }
+/* Deliberately unlike a peak marker: 1.25x the size and a rounded square rather
+   than a circle, so hub vs peak is readable by silhouette alone -- at a glance,
+   in the corner of your eye, and for anyone who can't separate the two by color. */
+.hub-marker {
+  width: 25px; height: 25px;
+  display: grid; place-items: center;
+  background: var(--hub);
+  border: 2px solid #08121c;
+  border-radius: 7px;
+  box-shadow: 0 1px 5px rgba(0,0,0,.45);
+  cursor: pointer;
+}
+.hub-marker svg { width: 15px; height: 15px; fill: #08121c; display: block; }
+.hub-marker:hover { background: #8fccff; }
+
+/* MapLibre's own controls, restyled to match the panel instead of its white default. */
+.maplibregl-ctrl-group {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.5);
+}
+/* Only the stacked nav buttons get a divider -- not the ones inside our panel. */
+.maplibregl-ctrl-group > button + button { border-top: 1px solid var(--line); }
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter: invert(1) brightness(1.7); }
+/* MapLibre sets these on compound selectors (.maplibregl-ctrl-attrib.maplibregl-compact),
+   which outrank a single class -- hence !important rather than a specificity war.
+   Without it the text stays black on the dark plate: 1.2:1, effectively invisible. */
+.maplibregl-ctrl-attrib {
+  background: rgba(22,29,35,.86) !important;
+  color: var(--ink-dim) !important;
+  border-radius: 6px 0 0 0;
+  font-size: 11px;
+}
+.maplibregl-ctrl-attrib-inner { color: var(--ink-dim); }
+.maplibregl-ctrl-attrib a { color: var(--ink-dim); }
+.maplibregl-ctrl-attrib-button { filter: invert(1) brightness(1.7); }
+
+/* ---------- basemap + legend panel ---------- */
+.map-panel { overflow: visible; }
+/* MapLibre hard-sizes every button in a ctrl-group to 29x29 with display:block.
+   These selectors have to outrank `.maplibregl-ctrl-group button`, or the icon
+   sits in a 29px box at the panel's left edge and the basemap labels get clipped
+   to a third of their width. */
+.map-panel .map-panel-toggle {
+  width: 100%;
+  min-width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none; border: none; cursor: pointer; padding: 0;
+}
+.map-panel .map-panel-toggle svg { width: 17px; height: 17px; fill: var(--ink); display: block; }
+.map-panel .map-panel-toggle:hover { background: none; }
+.map-panel .map-panel-toggle:hover svg { fill: var(--accent); }
+.map-panel-body {
+  display: none;
+  padding: 9px 12px 11px;
+  border-top: 1px solid var(--line);
+  max-height: 78vh;
+  overflow-y: auto;
+}
+.map-panel.is-open .map-panel-body { display: block; }
+.map-panel h4 {
+  margin: 0 0 5px;
+  font-size: 10.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.map-panel-bases { display: grid; gap: 4px; margin-bottom: 10px; }
+.map-panel .map-panel-bases button {
+  width: 100%;
+  height: auto;
+  display: block;
+  text-align: left;
+  white-space: nowrap;
+  background: none;
+  color: var(--ink-dim);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.map-panel .map-panel-bases button:hover { color: var(--ink); border-color: var(--ink-dim); background: none; }
+.map-panel .map-panel-bases button.is-on {
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.map-legend { width: 178px; border-top: 1px solid var(--line); padding-top: 9px; }
+.map-legend h4 {
+  margin: 0 0 5px;
+  font-size: 10.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.map-legend-hint { margin: 0 0 5px; font-size: 10.5px; color: var(--ink-dim); line-height: 1.4; }
+.map-legend ul { list-style: none; margin: 0 0 9px; padding: 0; display: grid; gap: 4px; }
+.map-legend li {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 11.5px; color: var(--ink-dim);
+}
+/* Mirrors the map markers: a coloured ring, and a dot the size of the centre. */
+.lg-ring {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid #0d1216;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.15);
+  flex: none;
+}
+.lg-dot { width: 9px; height: 9px; border-radius: 50%; margin: 0 2px; flex: none; }
+.lg-tent {
+  width: 16px; height: 16px; border-radius: 5px;
+  background: var(--hub);
+  display: grid; place-items: center; flex: none;
+}
+.lg-tent svg { width: 10px; height: 10px; fill: #08121c; display: block; }
+
+.map-offline { width: 178px; border-top: 1px solid var(--line); padding-top: 9px; margin-top: 9px; }
+.map-offline h4 {
+  margin: 0 0 5px;
+  font-size: 10.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+#offline-dl-btn {
+  width: 100%;
+  text-align: center;
+  background: none;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+#offline-dl-btn:hover { background: rgba(242,166,90,.1); }
+#offline-dl-btn:disabled { cursor: default; }
+.offline-status { margin: 6px 0 0; font-size: 10.5px; color: var(--ink-dim); line-height: 1.4; }
+
+.maplibregl-popup-content {
+  background: var(--panel-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 11px 13px;
+  font-size: 13px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.5);
+}
+.maplibregl-popup-content h3 { margin: 0 0 5px; font-size: 14.5px; }
+.maplibregl-popup-content p { margin: 6px 0 0; color: var(--ink-dim); font-size: 12.5px; }
+.maplibregl-popup-close-button {
+  color: var(--ink-dim);
+  font-size: 17px;
+  padding: 2px 6px 4px;
+  background: none;
+  border: none;
+}
+.maplibregl-popup-close-button:hover { color: var(--ink); background: none; }
+/* The callout arrow has to be tinted per direction to match the popup. */
+.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--panel-2); }
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--panel-2); }
+.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--panel-2); }
+.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--panel-2); }
+
+/* ---------- show-all-peaks pill ---------- */
+/* Floating over the map (MapLibre's own container is position:relative), top
+   centre so it clears the nav control (top-left) and the layers panel (top-right). */
+.show-all-btn {
+  display: none;
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  background: var(--panel-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,.45);
+}
+.show-all-btn:hover { border-color: var(--accent); color: var(--accent); }
+.show-all-btn.is-shown { display: block; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 820px) {
+  .layout { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+  .panel-toggle { display: block; }
+  .sidebar {
+    display: none;
+    position: absolute;
+    inset: 0;
+    /* Above MapLibre's controls so they don't bleed through the panel. */
+    z-index: 1200;
+    border-right: none;
+  }
+  .sidebar.open { display: block; }
+}

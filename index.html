@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colorado 14ers — chud summer roadtrip</title>
+<meta name="description" content="A spontaneous-roadtrip map of all 58 Colorado 14ers and the town hubs to base out of, with difficulty, exposure, rockfall and route-finding ratings.">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"
+      integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK" crossorigin="">
+<link rel="stylesheet" href="style.css">
+
+<!-- Installable / offline support. sw.js has to stay at the repo root (see its
+     own comment); the manifest and icons are the rest of the PWA footprint. -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#161d23">
+<link rel="icon" href="pwa/icons/icon-192.png">
+<!-- iOS ignores the manifest for "Add to Home Screen" and wants these instead. -->
+<link rel="apple-touch-icon" href="pwa/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="14ers Map">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <h1>Colorado 14ers <span>· chud summer roadtrip</span></h1>
+  </div>
+  <button id="panel-toggle" class="panel-toggle" aria-expanded="false" aria-controls="sidebar">Peaks</button>
+</header>
+
+<main class="layout">
+  <aside id="sidebar" class="sidebar">
+    <div class="filters">
+      <label class="field">
+        <span>Hub</span>
+        <select id="filter-hub"><option value="">All hubs</option></select>
+      </label>
+      <label class="field">
+        <span>Max difficulty</span>
+        <select id="filter-class"></select>
+      </label>
+      <label class="field">
+        <span>Max risk</span>
+        <select id="filter-risk"></select>
+      </label>
+      <button id="filter-reset" class="reset" type="button">Reset filters</button>
+      <button id="pick-open" class="pick-open" type="button">
+        Choose peaks <span id="pick-count"></span>
+      </button>
+    </div>
+
+    <p id="count" class="count" role="status"></p>
+    <ul id="peak-list" class="peak-list"></ul>
+
+    <section class="legend">
+      <h2>Difficulty <small>(YDS)</small></h2>
+      <ul class="legend-list" id="legend-class"></ul>
+      <h2>Risk</h2>
+      <ul class="legend-list" id="legend-risk"></ul>
+      <ul class="legend-list legend-defs">
+        <li><strong>Exposure</strong> — how far you'd fall, and how bad it would be.</li>
+        <li><strong>Rockfall</strong> — loose rock, and parties above you knocking it down.</li>
+        <li><strong>Route-finding</strong> — how easy it is to get off-route, especially descending.</li>
+      </ul>
+    </section>
+  </aside>
+
+  <div id="map" class="map"></div>
+</main>
+
+<dialog id="picker" class="picker" aria-labelledby="picker-title">
+  <header class="picker-head">
+    <div>
+      <h2 id="picker-title">Choose peaks</h2>
+      <p>All 58 named Colorado 14ers. Tick the ones you have any interest in — the map and
+         list show only those. Your choices are saved in this browser, and the link below
+         carries them to your phone or anyone else.</p>
+    </div>
+    <button id="pick-close" class="pick-close" type="button" aria-label="Close">&times;</button>
+  </header>
+
+  <div class="picker-tools">
+    <input id="pick-search" type="search" placeholder="Search peaks, ranges, hubs…"
+           aria-label="Search peaks">
+    <div class="picker-bulk">
+      <button data-bulk="all" type="button">All 58</button>
+      <button data-bulk="featured" type="button">Featured 28</button>
+      <button data-bulk="none" type="button">None</button>
+    </div>
+    <button id="pick-share" class="pick-share" type="button">Copy link to this selection</button>
+  </div>
+
+  <p id="pick-status" class="picker-status" role="status"></p>
+  <div id="pick-list" class="picker-list"></div>
+</dialog>
+
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"
+        integrity="sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOxcffFmCJBL0dgdvGp" crossorigin=""></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script src="pwa/register.js"></script>
+</body>
+</html>
