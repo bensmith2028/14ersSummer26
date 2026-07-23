@@ -372,6 +372,16 @@ a { color: var(--accent); }
 .maplibregl-ctrl-attrib a { color: var(--ink-dim); }
 .maplibregl-ctrl-attrib-button { filter: invert(1) brightness(1.7); }
 
+.maplibregl-ctrl-scale {
+  background: rgba(22,29,35,.86) !important;
+  border: 2px solid var(--ink-dim) !important;
+  border-top: none !important;
+  color: var(--ink) !important;
+  font-size: 11px !important;
+  padding: 1px 6px !important;
+  border-radius: 0 0 4px 4px;
+}
+
 /* ---------- basemap + legend panel ---------- */
 .map-panel { overflow: visible; }
 /* MapLibre hard-sizes every button in a ctrl-group to 29x29 with display:block.

@@ -1345,8 +1345,8 @@ const LAKES = [
  {
   "name": "Emerald Lake",
   "hub": "estes-park",
-  "lat": 40.30923,
-  "lon": -105.66146,
+  "lat": 40.30973,
+  "lon": -105.66847,
   "elev": 10110,
   "dist": "3.6 mi",
   "gain": "605'",

@@ -172,6 +172,9 @@ const map = new maplibregl.Map({
   attributionControl: { compact: true },
 });
 map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-left");
+// Redraws itself on every zoom change -- the same live scale bar behavior as
+// Google Maps, not a static figure that goes wrong as soon as you scroll.
+map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: "imperial" }), "bottom-left");
 
 // MapLibre renders the compact attribution expanded, so the map opens with a
 // ~540px credit bar across the bottom. Collapse it to its "i" button.
