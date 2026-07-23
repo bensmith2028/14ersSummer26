@@ -597,8 +597,9 @@ HUBS.forEach((h) => {
   hubMarkers.push(marker);
 });
 
-// Always on the map, unaffected by the hub/difficulty/risk filters or the peak
-// picker -- a separate category, not a 14er option to toggle.
+// Tied to a hub, same as a peak -- the hub filter shows/hides them together.
+// Not part of the peak picker or share-link bitmask, and no class/exposure/
+// risk (inapplicable to a lake hike), so they still aren't full peaks.
 LAKES.forEach((l) => {
   const el = document.createElement("div");
   el.className = "lake-marker";
@@ -608,9 +609,8 @@ LAKES.forEach((l) => {
 
   const marker = new maplibregl.Marker({ element: el })
     .setLngLat([l.lon, l.lat])
-    .setPopup(new maplibregl.Popup({ offset: 14, maxWidth: "300px" }).setHTML(lakePopup(l)))
-    .addTo(map);
-  lakeMarkers.set(l.name, { marker, el });
+    .setPopup(new maplibregl.Popup({ offset: 14, maxWidth: "300px" }).setHTML(lakePopup(l)));
+  lakeMarkers.set(l.name, { marker, el, on: false });
 });
 
 PEAKS.forEach((p) => {
@@ -637,8 +637,13 @@ const visible = () =>
       worstRisk(p) <= state.maxRisk
   );
 
+// Lakes follow the hub filter like a peak would, but skip the enabled-set,
+// class and risk gating -- there's no picker entry or rating for them.
+const visibleLakes = () => LAKES.filter((l) => !state.hub || l.hub === state.hub);
+
 function render() {
   const list = visible();
+  const lakeList = visibleLakes();
 
   showAllBtn.classList.toggle("is-shown", !!state.hub);
 
@@ -660,44 +665,54 @@ function render() {
     }
   });
 
-  // Lakes are always on the map, so this only ever needs to update selection
-  // styling -- never add/remove.
-  lakeMarkers.forEach(({ el }, name) => {
-    el.classList.toggle("sel", name === state.selectedLake);
+  const shownLakes = new Set(lakeList.map((l) => l.name));
+  lakeMarkers.forEach((entry, name) => {
+    const { marker, el } = entry;
+    if (shownLakes.has(name)) {
+      if (!entry.on) {
+        marker.addTo(map);
+        entry.on = true;
+      }
+      el.classList.toggle("sel", name === state.selectedLake);
+    } else if (entry.on) {
+      marker.remove();
+      entry.on = false;
+    }
   });
 
   const ul = document.getElementById("peak-list");
   ul.innerHTML = "";
 
-  // Group by hub, ordered as HUBS is, so the list reads as an itinerary.
+  // Group by hub, ordered as HUBS is, so the list reads as an itinerary. Lakes
+  // fall into their hub's section alongside its peaks -- same filter, same
+  // grouping -- and stay visually distinct only via their own card/marker style.
   HUBS.forEach((h) => {
     const inHub = list.filter((p) => p.hub === h.id);
-    if (!inHub.length) return;
+    const lakesInHub = lakeList.filter((l) => l.hub === h.id);
+    if (!inHub.length && !lakesInHub.length) return;
+
+    const parts = [];
+    if (inHub.length) parts.push(`${inHub.length} peak${inHub.length > 1 ? "s" : ""}`);
+    if (lakesInHub.length) parts.push(`${lakesInHub.length} lake trail${lakesInHub.length > 1 ? "s" : ""}`);
 
     const heading = document.createElement("li");
     heading.className = "hub-heading";
-    heading.textContent = `${h.name} — ${inHub.length} peak${inHub.length > 1 ? "s" : ""}`;
+    heading.textContent = `${h.name} — ${parts.join(", ")}`;
     ul.appendChild(heading);
 
     inHub.forEach((p) => ul.appendChild(peakCard(p)));
+    lakesInHub.forEach((l) => ul.appendChild(lakeCard(l)));
   });
-
-  // Always shown, regardless of filters or the peak picker -- a separate
-  // category rather than something to toggle alongside the 14ers.
-  const lakeHeading = document.createElement("li");
-  lakeHeading.className = "hub-heading lake-heading";
-  lakeHeading.textContent = `Lake trails — not 14ers`;
-  ul.appendChild(lakeHeading);
-  LAKES.forEach((l) => ul.appendChild(lakeCard(l)));
 
   const n = list.length;
   const chosen = state.enabled.size;
   const hidden = PEAKS.length - chosen;
   document.getElementById("count").textContent =
     (n === chosen ? `${n} peak${n === 1 ? "" : "s"}` : `${n} of ${chosen} match filters`) +
-    (hidden ? ` · ${hidden} not chosen` : "");
+    (hidden ? ` · ${hidden} not chosen` : "") +
+    (lakeList.length ? ` · ${lakeList.length} lake trail${lakeList.length > 1 ? "s" : ""}` : "");
 
-  if (!n) {
+  if (!n && !lakeList.length) {
     const empty = document.createElement("li");
     empty.className = "peak-note";
     empty.textContent = chosen
@@ -846,12 +861,14 @@ map.on("click", (e) => {
 
 function fitVisible() {
   const list = visible();
+  const lakeList = visibleLakes();
   // A zero-sized container makes the fit math produce nonsense, so bail until
   // the layout has settled.
   const c = map.getContainer();
-  if (!list.length || !c.clientWidth || !c.clientHeight) return;
+  if ((!list.length && !lakeList.length) || !c.clientWidth || !c.clientHeight) return;
   const bounds = new maplibregl.LngLatBounds();
   list.forEach((p) => bounds.extend([p.lon, p.lat]));
+  lakeList.forEach((l) => bounds.extend([l.lon, l.lat]));
   // Include the hub itself when one is picked; otherwise all hubs, so the
   // starting view frames the whole trip regardless of viewport size.
   const hubs = state.hub ? [hubById[state.hub]] : HUBS;
@@ -862,7 +879,10 @@ function fitVisible() {
 /* ---------------- controls ---------------- */
 
 const hubSel = document.getElementById("filter-hub");
-HUBS.forEach((h) => hubSel.add(new Option(`${h.name} (${PEAKS.filter((p) => p.hub === h.id).length})`, h.id)));
+HUBS.forEach((h) => {
+  const n = PEAKS.filter((p) => p.hub === h.id).length + LAKES.filter((l) => l.hub === h.id).length;
+  hubSel.add(new Option(`${h.name} (${n})`, h.id));
+});
 
 const clsSel = document.getElementById("filter-class");
 CLASS_ORDER.forEach((c, i) => clsSel.add(new Option(`Up to ${c}`, i)));

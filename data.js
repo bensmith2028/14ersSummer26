@@ -1314,7 +1314,8 @@ const PEAKS = [
 const LAKES = [
  {
   "name": "Hessie Trail (Lost Lake)",
-  "lat": 39.9500,
+  "hub": "georgetown",
+  "lat": 39.95,
   "lon": -105.6147,
   "elev": 9850,
   "dist": "4.2 mi",
@@ -1323,8 +1324,9 @@ const LAKES = [
  },
  {
   "name": "Lake Isabelle Trail",
+  "hub": "estes-park",
   "lat": 40.0754,
-  "lon": -105.6510,
+  "lon": -105.651,
   "elev": 10872,
   "dist": "4.4 mi",
   "gain": "600'",
@@ -1332,6 +1334,7 @@ const LAKES = [
  },
  {
   "name": "Dream Lake",
+  "hub": "estes-park",
   "lat": 40.30944,
   "lon": -105.65889,
   "elev": 9905,
@@ -1341,6 +1344,7 @@ const LAKES = [
  },
  {
   "name": "Emerald Lake",
+  "hub": "estes-park",
   "lat": 40.30923,
   "lon": -105.66146,
   "elev": 10110,

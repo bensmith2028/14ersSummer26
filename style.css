@@ -243,7 +243,6 @@ body {
   font-weight: 600;
 }
 .hub-heading:first-child { margin-top: 0; }
-.hub-heading.lake-heading { color: var(--lake); }
 
 .peak {
   background: var(--panel-2);
