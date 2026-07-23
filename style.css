@@ -7,6 +7,7 @@
   --ink-dim: #9bacba;
   --accent: #f2a65a;
   --hub: #5ab0f2;
+  --lake: #2dd4bf;
 
   --c1: #4bbf73;
   --c2: #9ac93f;
@@ -242,6 +243,7 @@ body {
   font-weight: 600;
 }
 .hub-heading:first-child { margin-top: 0; }
+.hub-heading.lake-heading { color: var(--lake); }
 
 .peak {
   background: var(--panel-2);
@@ -253,6 +255,7 @@ body {
 }
 .peak:hover, .peak.active { border-color: var(--accent); background: #232e37; }
 .peak.active { outline: 1px solid var(--accent); }
+.lake-card { border-left-color: var(--lake); }
 
 .peak-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .peak-name { font-weight: 600; font-size: 14.5px; }
@@ -329,6 +332,23 @@ a { color: var(--accent); }
 }
 .hub-marker svg { width: 15px; height: 15px; fill: #08121c; display: block; }
 .hub-marker:hover { background: #8fccff; }
+
+/* A third distinct silhouette -- a diamond, teal -- so lake trails read apart
+   from both the peak circles and the hub rounded-squares at a glance. */
+.lake-marker {
+  width: 21px; height: 21px;
+  display: grid; place-items: center;
+  background: var(--lake);
+  border: 2px solid #08121c;
+  border-radius: 5px;
+  transform: rotate(45deg);
+  box-shadow: 0 1px 5px rgba(0,0,0,.45);
+  cursor: pointer;
+}
+.lake-marker svg { width: 12px; height: 12px; fill: #08121c; display: block; transform: rotate(-45deg); }
+.lake-marker:hover { background: #6fe6d4; }
+.map-dark .lake-marker { border-color: rgba(232, 238, 243, .92); }
+.lake-marker.sel { box-shadow: 0 0 0 4px var(--accent); }
 
 /* MapLibre's own controls, restyled to match the panel instead of its white default. */
 .maplibregl-ctrl-group {
@@ -436,6 +456,13 @@ a { color: var(--accent); }
   display: grid; place-items: center; flex: none;
 }
 .lg-tent svg { width: 10px; height: 10px; fill: #08121c; display: block; }
+.lg-wave {
+  width: 16px; height: 16px; border-radius: 4px;
+  background: var(--lake);
+  display: grid; place-items: center; flex: none;
+  transform: rotate(45deg);
+}
+.lg-wave svg { width: 9px; height: 9px; fill: #08121c; display: block; transform: rotate(-45deg); }
 
 .map-offline { width: 178px; border-top: 1px solid var(--line); padding-top: 9px; margin-top: 9px; }
 .map-offline h4 {

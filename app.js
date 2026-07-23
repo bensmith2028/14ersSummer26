@@ -35,6 +35,13 @@ const TENT_SVG =
   '<path d="M12 3.2 2.4 20.2h19.2L12 3.2Zm0 4.9 5.6 9.9h-3.1L12 13.4l-2.5 4.6H6.4L12 8.1Z"/>' +
   "</svg>";
 
+// A water drop -- lake trails are a separate category from peaks and hubs, so
+// they get their own silhouette rather than reusing either marker shape.
+const WAVE_SVG =
+  '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+  '<path d="M12 2.5c3.6 5.1 7 9.3 7 13a7 7 0 1 1-14 0c0-3.7 3.4-7.9 7-13Z"/>' +
+  "</svg>";
+
 const hubById = Object.fromEntries(HUBS.map((h) => [h.id, h]));
 const peakNames = new Set(PEAKS.map((p) => p.name));
 const featuredNames = () => PEAKS.filter((p) => p.featured).map((p) => p.name);
@@ -126,6 +133,7 @@ const state = {
   maxClass: CLASS_ORDER.length - 1,
   maxRisk: RISK_ORDER.length - 1,
   selected: null,
+  selectedLake: null,
   enabled: loadEnabled(),
 };
 
@@ -306,6 +314,7 @@ function setBasemap(name) {
 
 const markers = new Map(); // peak name -> { marker, el }
 const hubMarkers = [];
+const lakeMarkers = new Map(); // lake name -> { marker, el }
 
 // Marker ring = difficulty class, inner dot = exposure.
 function peakEl(p) {
@@ -334,6 +343,15 @@ function peakPopup(p) {
     `<p>${p.note}</p>` +
     `<p>Base: <strong>${hubById[p.hub].name}</strong></p>` +
     `<p class="popup-route">Standard route: <strong>${p.route}</strong></p>`
+  );
+}
+
+function lakePopup(l) {
+  return (
+    `<h3>${l.name}</h3>` +
+    `<div>${l.elev.toLocaleString()} ft</div>` +
+    `<div>${l.dist} · ${l.gain} gain</div>` +
+    `<p>${l.note}</p>`
   );
 }
 
@@ -367,10 +385,12 @@ class MapPanel {
       )}</ul>` +
       `<h4>Hubs</h4>` +
       `<ul><li><span class="lg-tent">${TENT_SVG}</span>Town to sleep &amp; climb from</li></ul>` +
+      `<h4>Lake trails</h4>` +
+      `<ul><li><span class="lg-wave">${WAVE_SVG}</span>Not a 14er &mdash; a nearby lake hike</li></ul>` +
       `</div>` +
       `<div class="map-offline">` +
       `<h4>Offline</h4>` +
-      `<p class="map-legend-hint" id="offline-hint">Every peak and hub, cached for use with no signal.</p>` +
+      `<p class="map-legend-hint" id="offline-hint">Every peak, hub and lake trail, cached for use with no signal.</p>` +
       `<button id="offline-dl-btn" type="button">Download for offline (~100 MB)</button>` +
       `<p class="offline-status" id="offline-status" role="status"></p>` +
       `</div></div>`;
@@ -429,6 +449,7 @@ function offlineStops() {
   stops.push({ lon: -106.4, lat: 39.0, zoom: 7, label: "Colorado overview" });
   stops.push({ lon: -106.4, lat: 39.0, zoom: 9, label: "Colorado overview" });
   HUBS.forEach((h) => stops.push({ lon: h.lon, lat: h.lat, zoom: 12, label: h.name }));
+  LAKES.forEach((l) => stops.push({ lon: l.lon, lat: l.lat, zoom: 13, label: l.name }));
   PEAKS.forEach((p) => stops.push({ lon: p.lon, lat: p.lat, zoom: 13, label: p.name }));
   return stops;
 }
@@ -576,6 +597,22 @@ HUBS.forEach((h) => {
   hubMarkers.push(marker);
 });
 
+// Always on the map, unaffected by the hub/difficulty/risk filters or the peak
+// picker -- a separate category, not a 14er option to toggle.
+LAKES.forEach((l) => {
+  const el = document.createElement("div");
+  el.className = "lake-marker";
+  el.title = l.name;
+  el.innerHTML = WAVE_SVG;
+  el.addEventListener("click", () => selectLake(l.name, false, { openPopup: false }));
+
+  const marker = new maplibregl.Marker({ element: el })
+    .setLngLat([l.lon, l.lat])
+    .setPopup(new maplibregl.Popup({ offset: 14, maxWidth: "300px" }).setHTML(lakePopup(l)))
+    .addTo(map);
+  lakeMarkers.set(l.name, { marker, el });
+});
+
 PEAKS.forEach((p) => {
   const el = peakEl(p);
   el.addEventListener("click", () => select(p.name, false, { openPopup: false }));
@@ -623,6 +660,12 @@ function render() {
     }
   });
 
+  // Lakes are always on the map, so this only ever needs to update selection
+  // styling -- never add/remove.
+  lakeMarkers.forEach(({ el }, name) => {
+    el.classList.toggle("sel", name === state.selectedLake);
+  });
+
   const ul = document.getElementById("peak-list");
   ul.innerHTML = "";
 
@@ -638,6 +681,14 @@ function render() {
 
     inHub.forEach((p) => ul.appendChild(peakCard(p)));
   });
+
+  // Always shown, regardless of filters or the peak picker -- a separate
+  // category rather than something to toggle alongside the 14ers.
+  const lakeHeading = document.createElement("li");
+  lakeHeading.className = "hub-heading lake-heading";
+  lakeHeading.textContent = `Lake trails — not 14ers`;
+  ul.appendChild(lakeHeading);
+  LAKES.forEach((l) => ul.appendChild(lakeCard(l)));
 
   const n = list.length;
   const chosen = state.enabled.size;
@@ -680,19 +731,43 @@ function peakCard(p) {
   return li;
 }
 
+function lakeCard(l) {
+  const li = document.createElement("li");
+  li.className = "peak lake-card" + (l.name === state.selectedLake ? " active" : "");
+  li.dataset.name = l.name;
+  li.innerHTML =
+    `<div class="peak-head">` +
+    `<span class="peak-name">${l.name}</span>` +
+    `<span class="peak-elev">${l.elev.toLocaleString()} ft</span>` +
+    `</div>` +
+    `<div class="tags">` +
+    `<span class="tag">${l.dist}</span>` +
+    `<span class="tag">${l.gain} gain</span>` +
+    `</div>` +
+    `<p class="peak-note">${l.note}</p>`;
+
+  li.addEventListener("click", () => selectLake(l.name, true));
+  return li;
+}
+
 // `openPopup: false` is for clicks on the marker itself: setPopup() installs its
 // own click handler on the same element, so opening the popup here too would
 // toggle it twice in one click and leave it shut -- which on mobile, where the
 // peak list is hidden, means a tapped peak shows nothing at all.
 function select(name, fly, { openPopup = true } = {}) {
   state.selected = name;
+  state.selectedLake = null;
   render();
   const p = PEAKS.find((x) => x.name === name);
   const { marker } = markers.get(name);
 
-  // Popups are per-marker, so without this an old one stays open behind the new.
+  // Popups are per-marker, so without this an old one stays open behind the new
+  // -- across both peaks and lakes, since only one thing is selected at a time.
   markers.forEach(({ marker: other }, otherName) => {
     if (otherName !== name && other.getPopup()?.isOpen()) other.togglePopup();
+  });
+  lakeMarkers.forEach(({ marker: other }) => {
+    if (other.getPopup()?.isOpen()) other.togglePopup();
   });
 
   if (fly) {
@@ -700,6 +775,30 @@ function select(name, fly, { openPopup = true } = {}) {
   }
   if (openPopup && !marker.getPopup().isOpen()) marker.togglePopup();
   document.querySelector(`.peak[data-name="${CSS.escape(name)}"]`)
+    ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+// Mirrors select(), but for the always-on lake layer: no fly-zoom default, no
+// enabled-set gating, and it clears any peak selection instead of the reverse.
+function selectLake(name, fly, { openPopup = true } = {}) {
+  state.selectedLake = name;
+  state.selected = null;
+  render();
+  const l = LAKES.find((x) => x.name === name);
+  const { marker } = lakeMarkers.get(name);
+
+  markers.forEach(({ marker: other }) => {
+    if (other.getPopup()?.isOpen()) other.togglePopup();
+  });
+  lakeMarkers.forEach(({ marker: other }, otherName) => {
+    if (otherName !== name && other.getPopup()?.isOpen()) other.togglePopup();
+  });
+
+  if (fly) {
+    map.flyTo({ center: [l.lon, l.lat], zoom: Math.max(map.getZoom(), 11), duration: 800 });
+  }
+  if (openPopup && !marker.getPopup().isOpen()) marker.togglePopup();
+  document.querySelector(`.lake-card[data-name="${CSS.escape(name)}"]`)
     ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 
@@ -733,9 +832,13 @@ function selectHub(id) {
 // same filtering here, or every marker tap would select-then-immediately-clear.
 map.on("click", (e) => {
   if (e.originalEvent?.target?.closest(".maplibregl-marker, .maplibregl-popup")) return;
-  if (!state.selected) return;
+  if (!state.selected && !state.selectedLake) return;
   state.selected = null;
+  state.selectedLake = null;
   markers.forEach(({ marker }) => {
+    if (marker.getPopup()?.isOpen()) marker.togglePopup();
+  });
+  lakeMarkers.forEach(({ marker }) => {
     if (marker.getPopup()?.isOpen()) marker.togglePopup();
   });
   render();

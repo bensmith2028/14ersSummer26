@@ -1,9 +1,10 @@
 # Colorado 14ers — Summer '26 Roadtrip Map
 
 An interactive map of **all 58 named Colorado 14ers**, grouped into 14 town hubs you can
-sleep at and climb out of for a few days at a time. A curated shortlist of **28 featured
-picks** is shown by default; use **Choose peaks** to switch on any of the rest, or to cut
-it down to your own list.
+sleep at and climb out of for a few days at a time, plus four nearby **lake trails** shown
+as a separate always-on category. A curated shortlist of **5 featured peaks** is shown by
+default; use **Choose peaks** to switch on any of the rest, or to cut it down to your own
+list.
 
 Every peak shows its **difficulty class**, **exposure**, **rockfall potential** and
 **route-finding** ratings, along with its standard route and route stats.
@@ -13,7 +14,7 @@ Every peak shows its **difficulty class**, **exposure**, **rockfall potential** 
 - **Choose peaks** opens a picker with all 58, grouped by hub, showing elevation, class
   and exposure for each. Tick what you're interested in; the map and list show only
   those. Search by peak, range or hub; select or clear a whole hub at once; or use the
-  **All 58 / Featured 28 / None** shortcuts. Featured picks are marked ★ and unranked
+  **All 58 / Featured 5 / None** shortcuts. Featured picks are marked ★ and unranked
   peaks are badged. Your selection is saved in the browser's local storage, so it
   survives reloads.
 - **Copy link to this selection** puts your picks in the URL so you can move them between
@@ -158,7 +159,7 @@ different mountain.
 
 There's no backend — the selection travels in the URL fragment, which is why this works
 on a static host. It's a bitmask, base64url-encoded, giving codes of about a dozen
-characters (`#p=brq8uHCBGw` is the featured 28).
+characters (`#p=BqAAAAAAEA` is the featured 5).
 
 Bit positions are keyed to each peak's **stable `id`**, not to its index in the array.
 That matters: if a peak is later added, removed or reordered, old links still resolve to
